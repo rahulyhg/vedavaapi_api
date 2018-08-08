@@ -1,16 +1,16 @@
+# -*- encoding:utf-8 -*-
 import getopt
 import os.path, sys, logging
 
-from sanskrit_data import file_helper
-
-from . import vedavaapi_services_helper
-from .api import app
-
-app_path = os.path.dirname(os.path.abspath(__file__))
+app_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 sys.path.insert(0, app_path)
 
+import vedavaapi.api.vedavaapi_services_helper as vedavaapi_services_helper
+from vedavaapi.api import app
+
+
 class Config(object):
-    services = ['gservices', 'users', 'store']
+    services = ['gservices']
     reset = False
     debug = False
     port = 9000
@@ -53,12 +53,15 @@ def main(argv):
 
     setup_app()
 
-    logging.info("Available on the following URLs:")
-    for line in file_helper.run_command(["/sbin/ifconfig"]).split("\n"):
-        import re
-        m = re.match('\s*inet addr:(.*?) .*', line)
-        if m:
-            logging.info("    http://" + m.group(1) + ":" + str(Config.port) + "/")
+    if sys.version_info >= (3,3):
+        #sanskrit_data imports urllib.request, which is not there in 2.x.
+        from sanskrit_data import file_helper
+        logging.info("Available on the following URLs:")
+        for line in file_helper.run_command(["/sbin/ifconfig"]).split("\n"):
+            import re
+            m = re.match('\s*inet addr:(.*?) .*', line)
+            if m:
+                logging.info("    http://" + m.group(1) + ":" + str(Config.port) + "/")
     app.run(
         host="0.0.0.0",
         port=Config.port,
