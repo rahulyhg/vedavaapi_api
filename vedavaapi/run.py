@@ -1,58 +1,35 @@
 # -*- encoding:utf-8 -*-
-import getopt
+import json
 import os.path, sys, logging
 
-app_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
-sys.path.insert(0, app_path)
+mydir = os.path.dirname(os.path.abspath(__file__))
+app_dir = os.path.join(mydir, '..')
+sys.path.insert(0, app_dir)
+runconfig_file = os.path.join(mydir, 'runconfig.json')
 
-import vedavaapi.api.vedavaapi_services_helper as vedavaapi_services_helper
 from vedavaapi.api import app
-
-
-class Config(object):
-    services = ['gservices']
-    reset = False
-    debug = False
-    port = 9000
-    confdir = os.path.join("/opt/vedavaapi", 'conf_local/')
-
-    services_config_file = 'server_config.json'  # relative to confdir
-
+from vedavaapi.common import start_app
 
 logging.basicConfig(
   level=logging.INFO,
   format="%(levelname)s: %(asctime)s {%(filename)s:%(lineno)d}: %(message)s "
 )
 
-def setup_app():
-    vedavaapi_services_helper.setup_services(app, os.path.join(Config.confdir, Config.services_config_file), Config.services, Config.reset)
+runconfig = {}
 
+def setup_app():
+    start_app(app, runconfig['services_config_file'], runconfig['services'], runconfig['reset'])
+
+def update_runconfig():
+    with open(runconfig_file) as rc:
+        runconfig.update(json.load(rc))
+        runconfig['services'] = [str(service) for service in runconfig['services']]
+
+    logging.info('starting app with configuration :' + json.dumps({'services' : runconfig['services'], 'services_config_file' : runconfig['services_config_file'], 'reset' : runconfig['reset']}, indent=3))
 
 def main(argv):
-    def usage():
-        logging.info("run.py [-d] [-r] [--port 4444]...")
-        logging.info("run.py -h")
-        exit(1)
-
-    global Config
-    try:
-        opts, args = getopt.getopt(argv, "drp:h", ["port=", "debug="])
-        for opt, arg in opts:
-            if opt == '-h':
-                usage()
-            if opt == '-r':
-                Config.reset = True
-            elif opt in ("-p", "--port"):
-                Config.port = int(arg)
-            elif opt in ("-d", "--debug"):
-                Config.debug = True
-    except getopt.GetoptError:
-        usage()
-    if args:
-        Config.services.extend(args)
-
+    update_runconfig()
     setup_app()
-
     if sys.version_info >= (3,3):
         #sanskrit_data imports urllib.request, which is not there in 2.x.
         from sanskrit_data import file_helper
@@ -61,18 +38,19 @@ def main(argv):
             import re
             m = re.match('\s*inet addr:(.*?) .*', line)
             if m:
-                logging.info("    http://" + m.group(1) + ":" + str(Config.port) + "/")
+                logging.info("    http://" + m.group(1) + ":" + str(runconfig['port']) + "/")
     app.run(
         host="0.0.0.0",
-        port=Config.port,
-        debug=Config.debug,
+        port=runconfig['port'],
+        debug=runconfig['debug'],
         use_reloader=False
     )
 
 
 if __name__ == "__main__":
   logging.info("Running in stand-alone mode.")
-  main(sys.argv[1:])
+  main(sys.argv[:])
 else:
   logging.info("Likely running as a WSGI app.")
+  update_runconfig()
   setup_app()
