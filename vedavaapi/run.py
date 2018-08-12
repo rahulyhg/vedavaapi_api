@@ -40,7 +40,7 @@ def main(argv):
             if m:
                 logging.info("    http://" + m.group(1) + ":" + str(runconfig['port']) + "/")
     app.run(
-        host="0.0.0.0",
+        host=runconfig['host'],
         port=runconfig['port'],
         debug=runconfig['debug'],
         use_reloader=False

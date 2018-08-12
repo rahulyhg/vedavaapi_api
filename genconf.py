@@ -13,6 +13,7 @@ class Default(object):
     wsgi_apache_config_template_file = 'wsgi/wsgi_apache_template.conf'
     runtime_config_file = 'vedavaapi/runconfig.json' #coniguration file to be generated for use with run.py
 
+    host = '0.0.0.0'
     port = 9000
     reset = False
     debug = False
@@ -27,6 +28,7 @@ def main(argv):
     parser.add_argument('-c', '--confdir', help='configuration directory for services, and wsgi configuration. defaults to /opt/vedavaapi/conf_local/', default=Default.confdir, dest='confdir')
     parser.add_argument('--servconf', help='configuration file for services. relative to confdir setting. defaults to "server_config.json"', default=Default.services_config_file, dest='servconf')
     parser.add_argument('--wsgiconf', help='apache wsgi configuration file. relative to confdir setting. defaults to "wsgi_apache_vedavaapi.conf"', default=Default.wsgi_apache_config_file, dest='wsgiconf')
+    parser.add_argument('--host', help='host the app runs on. (only have effect when directly running run.py)', default=Default.host, dest='host')
     parser.add_argument('-p', '--port', help='port the app runs on. (only have effect when directly running run.py)', default=Default.port, dest='port')
     parser.add_argument('-r', '--reset', help='reset services', action="store_true", dest='reset')
     parser.add_argument('-d', '--debug', help='enable debugging', action="store_true", dest='debug')
@@ -57,13 +59,14 @@ def main(argv):
 
     #create run-time config, which will be used by run.py
     runconf = {
+        'host' : args.host,
         'port' : args.port,
         'debug' : args.debug,
         'reset' : args.reset,
         'services' : args.services,
         'services_config_file' : os.path.join(args.confdir, args.servconf)
     }
-    with open(os.path.join(app_dir, Default.runtime_config_file), 'wb') as rc:
+    with open(os.path.join(app_dir, Default.runtime_config_file), 'w') as rc:
         json.dump(runconf, rc)
 
 

@@ -1,7 +1,7 @@
 {
   "store": {
     "db_type": "mongo",
-    "mongo_host": "mongodb://localhost/",
+    "mongo_host": "mongodb://127.0.0.1:27017",
     "couchdb_host": "http://sanskrit-coders:sktcouch@localhost:5984/",
     "repositories": [
       {
@@ -19,8 +19,8 @@
     ]
   },
   "gservices" : {
-    "google_creds_base_dir" : "/home/samskritam/vedavaapi/core_services/vedavaapi/conf_local/creds/google/",
-    "credentials_path" : "vedavaapi-credentials.json",
+    "google_creds_base_dir" : "/home/samskritam/vedavaapi/path/to/google/credsdir",
+    "credentials_path" : "vedavaapi_credentials.json",
     "is_service_account_credentials" : 0,
     "scopes" : ["https://www.googleapis.com/auth/drive.readonly", "https://www.googleapis.com/auth/spreadsheets.readonly"]
   },
@@ -56,17 +56,16 @@
     "users_db_name": "vedavaapi_users",
     "oauth": {
       "google": {
-        "comment": "Created by vishvas.vasuki at https://console.developers.google.com/apis/credentials?project=sanskritnlp",
-        "client_id": "703448017295-2rod58o21lumfs1jkhphaojkh46cooo1.apps.googleusercontent.com",
-        "client_secret": "Ns2-dcnpEb5M84hdhtRvUaC0"
+        "base_dir" : "/home/samskritam/vedavaapi/path/to/credsdir/google",
+        "client_secret_file" : "vedavaapi_client_secret_google.json"
       },
       "facebook": {
-        "client_id": "1706950096293019",
-        "client_secret": "1b2523ac7d0f4b7a73c410b2ec82586c"
+        "base_dir" : "/home/samskritam/vedavaapi/path/to/credsdir/facebook",
+        "client_secret_file" : "vedavaapi_client_secret_facebook.json"
       },
       "twitter": {
-        "client_id": "jSd7EMZFTQlxjLFG4WLmAe2OX",
-        "client_secret": "gvkh9fbbnKQXXbnqxfs8C0tCEqgNKKzoYJAWQQwtMG07UOPKAj"
+        "base_dir" : "/home/samskritam/vedavaapi/path/to/credsdir/twitter",
+        "client_secret_file" : "vedavaapi_client_secret_twitter.json"
       }
     },
     "initial_users": [
