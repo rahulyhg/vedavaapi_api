@@ -21,8 +21,8 @@ def setup_app():
     start_app(app, runconfig['services_config_file'], runconfig['services'], runconfig['reset'])
 
 def update_runconfig():
-    with open(runconfig_file) as rc:
-        runconfig.update(json.load(rc))
+    with open(runconfig_file, 'rb') as rc:
+        runconfig.update(json.loads(rc.read().decode('utf-8')))
         runconfig['services'] = [str(service) for service in runconfig['services']]
 
     logging.info('starting app with configuration :' + json.dumps({'services' : runconfig['services'], 'services_config_file' : runconfig['services_config_file'], 'reset' : runconfig['reset']}, indent=3))

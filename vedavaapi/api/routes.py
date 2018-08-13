@@ -20,6 +20,7 @@ def static_file(path):
         reload(sys)
         sys.setdefaultencoding('utf8')
     return send_from_directory(os.path.join(app.root_path, 'static'), path)
+    #return 'namaste'
 
 
 @app.route("/sitemap")
