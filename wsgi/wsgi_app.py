@@ -12,12 +12,13 @@ logging.basicConfig(
 
 (file_path, fname) = os.path.split(__file__)
 app_path = os.path.dirname(file_path)
-os.chdir(app_path)
+if app_path:
+  os.chdir(app_path)
 logging.info("My path is " + app_path)
 sys.path.insert (0, app_path)
 
 namespace_dir = os.path.join(app_path, '..')
-all_repos = ['vedavaapi_core', 'ullekhanam', 'docimage', 'vedavaapi_api', 'sling']
+all_repos = ['vedavaapi_core', 'core_services', 'ullekhanam', 'docimage', 'vedavaapi_api', 'sling']
 for repo in all_repos:
   sys.path.insert(1, os.path.join(namespace_dir, repo))
 

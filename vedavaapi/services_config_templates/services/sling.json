@@ -1,0 +1,11 @@
+{
+  "scl_url": "http://localhost/scl",
+  "sclpath": "/home/damodarreddy/పొందినవి/గురుకులం/vedavaapi/sclbuild/build/",
+  "sandhi_gsheet_id": "1yP82Y5d5mGrvNV2e-OPc6rBhPEtTYWI2vEwYN7uZdnU",
+  "varna_sandhi_rules_sheet": "varna_sandhi_rules",
+  "svara_sandhi_rules_sheet": "svara_sandhi_rules",
+  "macros_sheet": "Macros",
+  "grammar_db": "grammar",
+  "samvit_db": "samvit"
+}
+  

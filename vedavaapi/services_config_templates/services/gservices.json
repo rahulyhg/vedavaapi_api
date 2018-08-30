@@ -1,0 +1,9 @@
+{
+  "google_creds_base_dir": "/opt/vedavaapi/conf_local/creds/authorized/google/",
+  "credentials_path": "vedavaapi_credentials.json",
+  "is_service_account_credentials": 0,
+  "scopes": [
+    "https://www.googleapis.com/auth/drive.readonly",
+    "https://www.googleapis.com/auth/spreadsheets.readonly"
+  ]
+}
