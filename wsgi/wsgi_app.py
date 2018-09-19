@@ -17,10 +17,10 @@ if app_path:
 logging.info("My path is " + app_path)
 sys.path.insert (0, app_path)
 
-namespace_dir = os.path.join(app_path, '..')
-all_repos = ['vedavaapi_core', 'core_services', 'ullekhanam', 'docimage', 'vedavaapi_api', 'sling']
-for repo in all_repos:
-  sys.path.insert(1, os.path.join(namespace_dir, repo))
+namespace_dir = os.path.normpath(os.path.join(app_path, '..'))
+all_services = ['vedavaapi_core', 'core_services', 'ullekhanam', 'docimage', 'vedavaapi_api', 'sling']
+for service in all_services:
+  sys.path.insert(1, os.path.join(namespace_dir, service))
 
 
 sys.stdout = sys.stderr
