@@ -1,0 +1,12 @@
+{
+  "smaps_db" : "smaps",
+  "grantha_collection" : "granthas",
+  "vakya_collection" : "vakyas",
+  "sambandha_collection" : "sambandhas",
+
+  "master_spreadsheet_id" : "1Ne7rDBCgR71SOoZTPDNhfz2yywKp3EXfWaWBhlZY9Pg",
+  "master_sheet_title" : "Granthas",
+
+  "vakyas_sheet_title" : "Vakyas",
+  "sambandhas_sheet_title" : "Sambandhas"
+}
