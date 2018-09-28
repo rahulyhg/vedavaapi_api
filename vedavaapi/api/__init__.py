@@ -10,6 +10,7 @@ try:
     app.config.from_json(filename="config.json")
 except Exception as e:
     logging.info(e)
+    # raise e
     pass
 
 CORS(app=app,
