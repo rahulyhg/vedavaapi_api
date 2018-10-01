@@ -16,7 +16,7 @@ def unicode_for(astring, encoding='utf-8', ensure=False):
 mydir = unicode_for(os.path.dirname(os.path.abspath(__file__)))
 vedavaapi_api_dir = unicode_for(os.path.normpath(os.path.join(mydir, os.path.pardir)))
 vedavaapi_dir = unicode_for(os.path.normpath(os.path.join(vedavaapi_api_dir, os.path.pardir)))
-all_package_dirs = ['vedavaapi_core', 'vedavaapi_api', 'docimage', 'core_services', 'ullekhanam', 'sling', 'smaps']  # to be added to PYTHONPATH for this invocation. relative to root vedavaapi dir
+all_package_dirs = ['vedavaapi_core', 'vedavaapi_api', 'docimage', 'core_services', 'ullekhanam', 'sling', 'smaps', 'objectdb']  # to be added to PYTHONPATH for this invocation. relative to root vedavaapi dir
 for package_dir in all_package_dirs:
     sys.path.append(unicode_for(os.path.join(vedavaapi_dir, package_dir)))
 
