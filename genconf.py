@@ -15,18 +15,18 @@ file_store_conventions = DotDict({
     'creds_base_dir': 'creds',  #
     'data_base_dir': 'data',
 
-    'repos_dir': 'repos'  # relative to structure's mount_path
+    'repos_dir': 'repos'  # relative to structure's install_path
 })
 
 
 default_config = DotDict({
-    'mount_path': '/opt/vedavaapi',
+    'install_path': '/opt/vedavaapi',
     'overwrite': False,  # should overwrite service_config if it already exists?
 
     'db_type': 'mongo',
     'db_host': 'mongodb://127.0.0.1:27017',
 
-    'creds_to_copy': None,  # path to creds folder_structures to be copied to creds folder in mount_path
+    'creds_to_copy': None,  # path to creds folder_structures to be copied to creds folder in install_path
 
     'runconfig_file': 'vedavaapi/runconfig.json',
     # 'reset_token_file': '.reset_token',
@@ -73,12 +73,12 @@ for package_dir in all_package_dirs:
 
 def main(argv):
     parser = argparse.ArgumentParser()
-    parser.add_argument('-m', '--mount_path', help='root path, where we mount entire app file structure. defaults to /opt/vedavaapi/', default=default_config.mount_path, dest='mount_path')
+    parser.add_argument('-m', '--install_path', help='root path, where we mount entire app file structure. defaults to /opt/vedavaapi/', default=default_config.install_path, dest='install_path')
     parser.add_argument('-o', '--overwrite', help='should overwrite service_config if it already exists?', action="store_true", default=default_config.overwrite, dest='overwrite')
     parser.add_argument('--wsgi_conf', help='apache wsgi configuration file. relative to confdir setting. defaults to "wsgi_apache_vedavaapi.conf"', default=default_config.apache_wsgi_config_file, dest='wsgi_conf')
     parser.add_argument('--db_type', help='defaults to mongo', default=None, dest='db_type')
     parser.add_argument('--db_host', help='defaults to mongodb://127.0.0.1:27017', default=None, dest='db_host')
-    parser.add_argument('--creds_to_copy', help='default fallback creds, to be copied to creds folder in mount_path', default=default_config.creds_to_copy, dest='creds_to_copy')
+    parser.add_argument('--creds_to_copy', help='default fallback creds, to be copied to creds folder in install_path', default=default_config.creds_to_copy, dest='creds_to_copy')
     parser.add_argument('-r', '--reset', help='reset services', action="store_true", dest='reset', default=default_config.reset)
     parser.add_argument('-d', '--debug', help='enable debugging', action="store_true", dest='debug')
     parser.add_argument('--host', help='host the app runs on. (only have effect when directly running run.py)', default=default_config.host, dest='host')
@@ -92,17 +92,17 @@ def main(argv):
         parser.print_help(sys.stderr)
         exit(1)
 
-    # 1. check mount_path
-    if not os.path.exists(args.mount_path):
+    # 1. check install_path
+    if not os.path.exists(args.install_path):
         try:
-            os.makedirs(args.mount_path)
+            os.makedirs(args.install_path)
         except FileExistsError as fee:
             pass
         except Exception as e:
-            raise RuntimeError('mount_path does not exists, and genconf cannot create it', e)
+            raise RuntimeError('install_path does not exists, and genconf cannot create it', e)
 
     # 2. copy services config files
-    services_config_dir = os.path.normpath(os.path.join(unicode_for(args.mount_path), file_store_conventions.conf_base_dir, file_store_conventions.services_conf_base_dir))
+    services_config_dir = os.path.normpath(os.path.join(unicode_for(args.install_path), file_store_conventions.conf_base_dir, file_store_conventions.services_conf_base_dir))
     if not os.path.exists(services_config_dir):
         os.makedirs(services_config_dir)  # create services dir leaf with all parent dirs if not exists.
     services_copied = []
@@ -143,8 +143,8 @@ def main(argv):
         open(store_conf_path, 'wb').write(json.dumps(store_conf, ensure_ascii=False, indent=4).encode('utf-8'))
         print('db config updated')
 
-    # 4. copy creds structure to mount_path
-    global_creds_dir_path = os.path.join(unicode_for(args.mount_path), unicode_for(file_store_conventions.creds_base_dir))
+    # 4. copy creds structure to install_path
+    global_creds_dir_path = os.path.join(unicode_for(args.install_path), unicode_for(file_store_conventions.creds_base_dir))
     print(global_creds_dir_path)
     if not os.path.exists(global_creds_dir_path):
         if args.creds_to_copy:
@@ -160,7 +160,7 @@ def main(argv):
         templateconf = template.read().decode(encoding='utf-8')
         conf = templateconf.replace('$USER', user).replace('$GROUP', user).replace('$SRCDIR', vedavaapi_api_dir).replace('$MOD', 'vedavaapi')
 
-        conffile = os.path.join(args.mount_path, file_store_conventions.conf_base_dir, args.wsgi_conf)
+        conffile = os.path.join(args.install_path, file_store_conventions.conf_base_dir, args.wsgi_conf)
         try:
             with open(conffile, 'wb') as newf:
                 newf.write(conf.encode('utf-8'))
@@ -170,7 +170,7 @@ def main(argv):
 
     # 6. generate runconfig.json, and save it
     runconf = {
-        'mount_path': unicode_for(args.mount_path),
+        'install_path': unicode_for(args.install_path),
         'debug' : args.debug,
         'reset' : args.reset,
         'services' : args.services,

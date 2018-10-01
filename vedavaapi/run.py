@@ -43,7 +43,7 @@ def update_runconfig():
         runconfig.update(json.loads(rc.read().decode('utf-8')))
         runconfig['services'] = [str(service) for service in runconfig['services']]
 
-    logging.info('starting app with configuration :' + json.dumps({'services' : runconfig['services'], 'mount_path' : runconfig['mount_path'], 'reset' : runconfig.get('reset', False)}, indent=4))
+    logging.info('starting app with configuration :' + json.dumps({'services' : runconfig['services'], 'install_path' : runconfig['install_path'], 'reset' : runconfig.get('reset', False)}, indent=4))
 
 
 def update_instance_config():
@@ -77,7 +77,7 @@ def setup_app():
         new_run_config = json.loads(open(runconfig_file, 'rb').read().decode('utf-8'))
         del new_run_config['reset']
         open(runconfig_file, 'wb').write(json.dumps(new_run_config, ensure_ascii=False, indent=4).encode('utf-8'))
-    start_app(app, runconfig['mount_path'], runconfig['services'], runconfig.get('reset', False))
+    start_app(app, runconfig['install_path'], runconfig['services'], runconfig.get('reset', False))
 
 def main(argv):
     update_runconfig()

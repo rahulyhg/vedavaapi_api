@@ -1,6 +1,4 @@
 import logging
-import os
-from base64 import b64encode
 
 import flask
 from flask_cors import CORS
