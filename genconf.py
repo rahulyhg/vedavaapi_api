@@ -35,7 +35,7 @@ default_config = DotDict({
     'apache_wsgi_config_template': 'wsgi/wsgi_apache_template.conf',
 
     'host': '0.0.0.0',
-    'port': '5000',
+    'port': 5000,
     'reset': False,
     'debug': False
 })
@@ -175,7 +175,7 @@ def main(argv):
         'reset' : args.reset,
         'services' : args.services,
         'host' : args.host,
-        'port' : args.port,
+        'port' : int(args.port),
     }
     with open(os.path.join(vedavaapi_api_dir, default_config.runconfig_file), 'wb') as rc:
         rc.write(json.dumps(runconf, ensure_ascii=False, indent=4).encode('utf-8'))
