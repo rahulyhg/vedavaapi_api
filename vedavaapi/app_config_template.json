@@ -1,0 +1,8 @@
+{
+    "SESSION_COOKIE_NAME": "vedavaapi_session",
+    "RESTPLUS_JSON": {
+        "ensure_ascii" : false,
+        "sort_keys" : true,
+        "indent" : 4
+    }
+}

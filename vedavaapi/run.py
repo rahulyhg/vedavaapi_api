@@ -1,6 +1,9 @@
 # -*- encoding:utf-8 -*-
 import json
-import os.path, sys, logging
+import logging
+import os.path
+import sys
+
 
 def unicode_for(astring, encoding='utf-8', ensure=False):
     # whether it is py2.7 or py3, or obj is str or unicode or bytes, this method will return unicode string.
@@ -23,6 +26,7 @@ for package_dir in all_package_dirs:
 sys.path.insert(1, vedavaapi_api_dir)
 
 runconfig_file = os.path.join(mydir, 'runconfig.json')
+app_config_template_file = os.path.join(mydir, 'app_config_template.json')
 instance_config_dir = os.path.join(vedavaapi_api_dir, 'instance')  # flask by default supports instance configuration dir.
 instance_config_file = os.path.join(vedavaapi_api_dir, 'instance', 'config.json')  # this config file is for configuration of app instance, like secretkey, session_cookie_name, etc.
 
@@ -38,12 +42,13 @@ logging.basicConfig(
 
 runconfig = {}
 
+
 def update_runconfig():
     with open(runconfig_file, 'rb') as rc:
         runconfig.update(json.loads(rc.read().decode('utf-8')))
         runconfig['services'] = [str(service) for service in runconfig['services']]
 
-    logging.info('starting app with configuration :' + json.dumps({'services' : runconfig['services'], 'install_path' : runconfig['install_path'], 'reset' : runconfig.get('reset', False)}, indent=4))
+    logging.info('starting app with configuration :' + json.dumps({'services': runconfig['services'], 'install_path': runconfig['install_path'], 'reset': runconfig.get('reset', False)}, indent=4))
 
 
 def update_instance_config():
@@ -52,7 +57,9 @@ def update_instance_config():
     except:
         icjson = {}
     with open(instance_config_file, 'wb') as icf:
-        icjson_update = {"SESSION_COOKIE_NAME": "vedavaapi_session"}
+        actf = open(app_config_template_file, 'rb')
+        actjson = json.loads(actf.read().decode('utf-8'))
+        icjson_update = actjson
         from base64 import b64encode
         icjson_update['SECRET_KEY'] = b64encode(os.urandom(24)).decode('utf-8')
 
@@ -79,11 +86,12 @@ def setup_app():
         open(runconfig_file, 'wb').write(json.dumps(new_run_config, ensure_ascii=False, indent=4).encode('utf-8'))
     start_app(app, runconfig['install_path'], runconfig['services'], runconfig.get('reset', False))
 
+
 def main(argv):
     update_runconfig()
     setup_app()
-    if sys.version_info >= (3,3):
-        #sanskrit_data imports urllib.request, which is not there in 2.x.
+    if sys.version_info >= (3, 3):
+        # sanskrit_data imports urllib.request, which is not there in 2.x.
         from sanskrit_data import file_helper
         logging.info("Available on the following URLs:")
         for line in file_helper.run_command(["/sbin/ifconfig"]).split("\n"):
@@ -100,9 +108,9 @@ def main(argv):
 
 
 if __name__ == "__main__":
-  logging.info("Running in stand-alone mode.")
-  main(sys.argv[:])
+    logging.info("Running in stand-alone mode.")
+    main(sys.argv[:])
 else:
-  logging.info("Likely running as a WSGI app.")
-  update_runconfig()
-  setup_app()
+    logging.info("Likely running as a WSGI app.")
+    update_runconfig()
+    setup_app()
