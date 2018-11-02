@@ -66,7 +66,7 @@ def update_instance_config():
         icjson.update(icjson_update)
         icf.write(json.dumps(icjson, indent=4, ensure_ascii=True).encode("utf-8"))
         app.config.update(icjson)
-        print(app.config)
+        # print(app.config)
 
 
 def setup_app():
@@ -90,15 +90,9 @@ def setup_app():
 def main(argv):
     update_runconfig()
     setup_app()
-    if sys.version_info >= (3, 3):
-        # sanskrit_data imports urllib.request, which is not there in 2.x.
-        from sanskrit_data import file_helper
-        logging.info("Available on the following URLs:")
-        for line in file_helper.run_command(["/sbin/ifconfig"]).split("\n"):
-            import re
-            m = re.match('\s*inet addr:(.*?) .*', line)
-            if m:
-                logging.info("    http://" + m.group(1) + ":" + str(runconfig['port']) + "/")
+    from subprocess import check_output
+    ip_addr = unicode_for(check_output(['hostname', '--all-ip-addresses'])).split('\n')[0].strip()
+    logging.info("Running on http://{}:{}/".format(ip_addr, str(runconfig['port'])))
     app.run(
         host=runconfig['host'],
         port=runconfig['port'],
