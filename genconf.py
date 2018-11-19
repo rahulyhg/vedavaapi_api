@@ -67,7 +67,7 @@ vedavaapi_api_dir = unicode_for(os.path.dirname(os.path.abspath(__file__)))
 vedavaapi_dir = os.path.normpath(os.path.join(vedavaapi_api_dir, os.path.pardir))
 # print(vedavaapi_api_dir, vedavaapi_dir)
 
-all_package_dirs = ['vedavaapi_core', 'vedavaapi_api', 'docimage', 'core_services', 'ullekhanam', 'sling', 'smaps', 'objectdb', "sanskrit_data", "google_services_helper"]  # to be added to PYTHONPATH for this invocation. relative to root vedavaapi dir
+all_package_dirs = ['vedavaapi_core', 'vedavaapi_api', 'docimage', 'core_services', 'ullekhanam', 'iiif', 'sling', 'smaps', 'objectdb', "sanskrit_data", "google_services_helper"]  # to be added to PYTHONPATH for this invocation. relative to root vedavaapi dir
 for package_dir in all_package_dirs:
     sys.path.insert(1, os.path.join(vedavaapi_dir, package_dir))
 
@@ -108,7 +108,8 @@ def main(argv):
     services_copied = []
 
     def copy_service_config(service_name):
-        svc_cls = "Vedavaapi" + str.capitalize(service_name)
+        from vedavaapi.common import VedavaapiServices
+        svc_cls = VedavaapiServices.service_class_name(service_name)
         _tmp = __import__('vedavaapi.{}'.format(service_name), globals(), locals(), [svc_cls])
         svc_cls = eval('_tmp.' + svc_cls)
         for dep in svc_cls.dependency_services:
