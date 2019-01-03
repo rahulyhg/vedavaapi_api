@@ -1,0 +1,38 @@
+{
+  "vedavaapi": {
+    "label": "vedavaapi",
+    "description": "vedavaapi organisation",
+    "root_admin": {
+      "email": "admin.1@vedavaapi.org",
+      "hashedPassword": "$2b$12$VBEGrh80kp9SCQ4kTZOF9uU5zXh.lnADujlgjmGDxrHPNElxxBQh2"
+    },
+    "db_type": "mongo",
+    "db_host": "mongodb://127.0.0.1:27017",
+    "db_prefix": "vedavaapi",
+    "file_store_base_path": "vedavaapi"
+  },
+  "raifox": {
+    "label": "raifox",
+    "description": "raifox organisation",
+    "root_admin": {
+      "email": "admin.1@raifox.com",
+      "hashedPassword": "$2b$12$VBEGrh80kp9SCQ4kTZOF9uU5zXh.lnADujlgjmGDxrHPNElxxBQh2"
+    },
+    "db_type": "mongo",
+    "db_host": "mongodb://127.0.0.1:27017",
+    "db_prefix": "raifox",
+    "file_store_base_path": "raifox"
+  },
+  "demo": {
+    "label": "demo",
+    "description": "demo organisation",
+    "root_admin": {
+      "email": "admin.1@demo.com",
+      "hashedPassword": "$2b$12$VBEGrh80kp9SCQ4kTZOF9uU5zXh.lnADujlgjmGDxrHPNElxxBQh2"
+    },
+    "db_type": "mongo",
+    "db_host": "mongodb://127.0.0.1:27017",
+    "db_prefix": "demo",
+    "file_store_base_path": "demo"
+  }
+}

@@ -19,7 +19,10 @@ def unicode_for(astring, encoding='utf-8', ensure=False):
 mydir = unicode_for(os.path.dirname(os.path.abspath(__file__)))
 vedavaapi_api_dir = unicode_for(os.path.normpath(os.path.join(mydir, os.path.pardir)))
 vedavaapi_dir = unicode_for(os.path.normpath(os.path.join(vedavaapi_api_dir, os.path.pardir)))
-all_package_dirs = ['vedavaapi_core', 'vedavaapi_api', 'docimage', 'core_services', 'ullekhanam', 'iiif', 'loris', 'sling', 'smaps', 'objectdb', 'sanskrit_data', 'sanskrit_ld', 'google_services_helper']  # to be added to PYTHONPATH for this invocation. relative to root vedavaapi dir
+all_package_dirs = [
+    'vedavaapi_core', 'vedavaapi_api', 'docimage', 'core_services', 'ullekhanam', 'iiif', 'loris',
+    'sling', 'smaps', 'objectdb', 'sanskrit_data', 'sanskrit_ld',
+    'google_services_helper']  # to be added to PYTHONPATH for this invocation. relative to root vedavaapi dir
 for package_dir in all_package_dirs:
     sys.path.append(unicode_for(os.path.join(vedavaapi_dir, package_dir)))
 
@@ -27,10 +30,11 @@ sys.path.insert(1, vedavaapi_api_dir)
 
 runconfig_file = os.path.join(mydir, 'runconfig.json')
 app_config_template_file = os.path.join(mydir, 'app_config_template.json')
-instance_config_dir = os.path.join(vedavaapi_api_dir, 'instance')  # flask by default supports instance configuration dir.
+instance_config_dir = os.path.join(vedavaapi_api_dir, 'instance')  # flask supports instance configuration dir.
 instance_config_file = os.path.join(vedavaapi_api_dir, 'instance', 'config.json')  # this config file is for configuration of app instance, like secretkey, session_cookie_name, etc.
 
-from vedavaapi.api import app
+from vedavaapi.application import app
+from vedavaapi.orgs import OrganizationsManager
 from vedavaapi.common import start_app
 
 
@@ -48,7 +52,12 @@ def update_runconfig():
         runconfig.update(json.loads(rc.read().decode('utf-8')))
         runconfig['services'] = [str(service) for service in runconfig['services']]
 
-    logging.info('starting app with configuration :' + json.dumps({'services': runconfig['services'], 'install_path': runconfig['install_path'], 'reset': runconfig.get('reset', False)}, indent=4))
+    logging.info(
+        'starting app with configuration :' + json.dumps(
+            runconfig,
+            indent=4
+        )
+    )
 
 
 def update_instance_config():
@@ -84,6 +93,12 @@ def setup_app():
         new_run_config = json.loads(open(runconfig_file, 'rb').read().decode('utf-8'))
         del new_run_config['reset']
         open(runconfig_file, 'wb').write(json.dumps(new_run_config, ensure_ascii=False, indent=4).encode('utf-8'))
+
+    orgs_config = json.loads(open(os.path.join(runconfig['install_path'], 'conf/orgs.json'), 'rb').read().decode('utf-8'))
+    orgs_manager = OrganizationsManager(app, orgs_config)
+    orgs_manager.register_blueprint()
+    orgs_manager.setup_middle_ware()
+
     start_app(app, runconfig['install_path'], runconfig['services'], runconfig.get('reset', False))
 
 

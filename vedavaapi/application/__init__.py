@@ -3,7 +3,7 @@ import logging
 import flask
 from flask_cors import CORS
 
-app = flask.Flask(__name__, instance_relative_config=True)
+app = flask.Flask(__name__, instance_relative_config=True, static_folder='static')
 try:
     app.config.from_json(filename="config.json")
 except Exception as e:
@@ -13,5 +13,6 @@ except Exception as e:
 
 CORS(app=app,
      supports_credentials=True)
+
 
 from . import routes

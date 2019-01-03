@@ -17,7 +17,9 @@ def index():
 def static_file(path):
     #this may cause UnicodeDecodeError in py2. static files won't work well with py2+, and flask. hense the fallowing fix
     if sys.version_info < (3, 0):
+        # noinspection PyUnresolvedReferences
         reload(sys)
+        # noinspection PyUnresolvedReferences
         sys.setdefaultencoding('utf8')
     return send_from_directory(os.path.join(app.root_path, 'static'), path)
     #return 'namaste'
@@ -34,8 +36,10 @@ def site_map():
         methods = ','.join(rule.methods)
         url = str(rule)
         if(sys.version_info < (3, 0)):
+            # noinspection PyUnresolvedReferences,PyCompatibility
             from urllib2 import unquote
         else:
+            # noinspection PyCompatibility
             from urllib.request import unquote
 
         line = unquote("{:50s} {:20s} {}".format(rule.endpoint, methods, url))
