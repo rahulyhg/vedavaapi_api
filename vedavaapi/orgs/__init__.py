@@ -27,5 +27,5 @@ class OrganizationPrefixMiddleware(object):
             return self.app(environ, start_response)
 
         environ['PATH_INFO'] = '/' + segments[2]
-        environ['SCRIPT_NAME'] = '/' + segments[1]
+        environ['SCRIPT_NAME'] = environ.get('SCRIPT_NAME', '') + '/' + segments[1]
         return self.app(environ, start_response)

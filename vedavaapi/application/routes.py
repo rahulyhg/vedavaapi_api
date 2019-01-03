@@ -10,19 +10,7 @@ from . import app
 @app.route('/')
 def index():
     flask.session['logstatus'] = 1
-    return flask.redirect('local/api_docs_index.html')
-
-
-@app.route('/local/<path:path>')
-def static_file(path):
-    #this may cause UnicodeDecodeError in py2. static files won't work well with py2+, and flask. hense the fallowing fix
-    if sys.version_info < (3, 0):
-        # noinspection PyUnresolvedReferences
-        reload(sys)
-        # noinspection PyUnresolvedReferences
-        sys.setdefaultencoding('utf8')
-    return send_from_directory(os.path.join(app.root_path, 'static'), path)
-    #return 'namaste'
+    return flask.redirect('static/api_docs_index.html')
 
 
 @app.route("/sitemap")
