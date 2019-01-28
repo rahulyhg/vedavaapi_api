@@ -13,6 +13,7 @@ class OrganizationsManager(object):
 
     def setup_middle_ware(self):
         self.app.wsgi_app = OrganizationPrefixMiddleware(self.app.wsgi_app, list(self.orgs_config.keys()))
+        self.app.config['ORGS'] = self.orgs_config.keys()
 
 
 class OrganizationPrefixMiddleware(object):
@@ -21,7 +22,6 @@ class OrganizationPrefixMiddleware(object):
         self.org_names = org_names
 
     def __call__(self, environ, start_response):
-
         segments = str(environ['PATH_INFO']).split('/', maxsplit=2)
         if len(segments) < 3 or segments[1] not in self.org_names:
             return self.app(environ, start_response)

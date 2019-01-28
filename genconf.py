@@ -15,35 +15,45 @@ class DotDict(dict):
 
 file_store_conventions = DotDict({
     'conf_base_dir': 'conf',  # relative to it's global/repo_specific root path
-    'services_conf_base_dir': 'services',  # relative to above conf_base_dir, where service configurations files will
+    'services_conf_base_dir': '_services',  # relative to above conf_base_dir, where service configurations files will
     # be copied
-    'repo_specific_conf_file': 'config.json',  # relative to repo, service specific conf_dir
-    'creds_base_dir': 'creds',  #
-    'data_base_dir': 'data',
 
-    'repos_dir': 'repos'  # relative to structure's install_path
+    'wsgi_conf_base_dir': '_wsgi',  # relative to above conf_base_dir
+    'apache_conf_file_path': 'apache_conf.conf',
+    'apache_https_conf_file_path': 'apache_https_conf.conf',
+
+
+    'creds_base_dir': '_creds',  #
 })
+
 
 default_config = DotDict({
     'install_path': '/opt/vedavaapi',
-    'overwrite': False,  # should overwrite service_config if it already exists?
-
+    'overwrite': False,
     'db_type': 'mongo',
     'db_host': 'mongodb://127.0.0.1:27017',
-
-    'creds_to_copy': None,  # path to creds folder_structures to be copied to creds folder in install_path
-
-    'runconfig_file': 'vedavaapi/runconfig.json',
-    # 'reset_token_file': '.reset_token',
-
-    'apache_wsgi_config_file': 'apache_wsgi_vedavaapi.conf',
-    'apache_wsgi_config_template': 'wsgi/wsgi_apache_template.conf',
+    'creds_dir': None,
 
     'host': '0.0.0.0',
     'port': 5000,
     'reset': False,
-    'debug': False
+    'debug': False,
+
+    'apache_conf_ln_path': '/etc/apache2/sites-enabled/vedavaapi_api.conf',
+    'apache_https_conf_ln_path': '/etc/apache2/sites-enabled/vedavaapi_api-le-ssl.conf',
+
+    'apache_conf_template_file_path': 'wsgi/apache_conf_template.conf',
+    'apache_https_conf_template_file_path': 'wsgi/apache_https_conf_template.conf',
+
+    'server_name': 'api.vedavaapi.org',
+    'wsgi_process_threads': 5,
+    'url_mount_path': 'py',
+
+    'ssl_cert_file_path': '/etc/letsencrypt/live/*.vedavaapi.org/fullchain.pem',
+    'ssl_cert_key_file_path': '/etc/letsencrypt/live/*.vedavaapi.org/privkey.pem'
 })
+
+runconfig_file_path = 'vedavaapi/runconfig.json'
 
 
 def bytes_for(astring, encoding='utf-8', ensure=False):
@@ -69,6 +79,8 @@ def unicode_for(astring, encoding='utf-8', ensure=False):
 
 
 user = unicode_for(getpass.getuser())
+group = user
+
 vedavaapi_api_dir = unicode_for(os.path.dirname(os.path.abspath(__file__)))
 vedavaapi_dir = os.path.normpath(os.path.join(vedavaapi_api_dir, os.path.pardir))
 # print(vedavaapi_api_dir, vedavaapi_dir)
@@ -76,7 +88,7 @@ vedavaapi_dir = os.path.normpath(os.path.join(vedavaapi_api_dir, os.path.pardir)
 
 all_package_dirs = [
     'vedavaapi_core', 'vedavaapi_api', 'docimage', 'core_services', 'ullekhanam',
-    'iiif', 'loris', 'sling', 'smaps', 'objectdb', "sanskrit_data",
+    'iiif', 'loris', 'sling', 'smaps', 'objectdb',
     "sanskrit_ld", "google_services_helper"
 ]  # to be added to PYTHONPATH for this invocation. relative to root vedavaapi dir
 
@@ -88,22 +100,20 @@ for package_dir in all_package_dirs:
 def main(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '-m', '--install_path', help='root path, where we mount entire app file structure. defaults to /opt/vedavaapi/',
+        '-i', '--install_path', help='install directory path, where we install entire app file structure. defaults to /opt/vedavaapi/',
         default=default_config.install_path, dest='install_path')
+
     parser.add_argument(
         '-o', '--overwrite', help='should overwrite service_config if it already exists?', action="store_true",
         default=default_config.overwrite, dest='overwrite')
-    parser.add_argument(
-        '--wsgi_conf',
-        help='apache wsgi configuration file. relative to confdir setting. defaults to "wsgi_apache_vedavaapi.conf"',
-        default=default_config.apache_wsgi_config_file, dest='wsgi_conf')
     parser.add_argument(
         '--db_type', help='defaults to mongo', default=None, dest='db_type')
     parser.add_argument(
         '--db_host', help='defaults to mongodb://127.0.0.1:27017', default=None, dest='db_host')
     parser.add_argument(
-        '--creds_to_copy', help='default fallback creds, to be copied to creds folder in install_path',
-        default=default_config.creds_to_copy, dest='creds_to_copy')
+        '--creds_dir', help='default creds to be copied to creds folder in install_path',
+        default=default_config.creds_dir, dest='creds_dir')
+
     parser.add_argument(
         '-r', '--reset', help='reset services', action="store_true", dest='reset', default=default_config.reset)
     parser.add_argument(
@@ -112,8 +122,23 @@ def main(argv):
         '--host', help='host the app runs on. (only have effect when directly running run.py)',
         default=default_config.host, dest='host')
     parser.add_argument(
-        '-p', '--port', help='port the app runs on. (only have effect when directly running run.py)',
+        '-p', '--port', help='port addr on which app have to listen. effective only when running flask server',
         default=default_config.port, dest='port')
+
+    parser.add_argument(
+        '--server_name', help='server_name for apache conf', default=default_config.server_name, dest='server_name')
+    parser.add_argument(
+        '--wsgi_process_threads', help='no of threads wsgi handler spans (to be set, in apache conf)', default=str(default_config.wsgi_process_threads), dest='wsgi_process_threads')
+    parser.add_argument(
+        '--url_mount_path', help='app url mount path. defaults to ' + default_config.url_mount_path, default=default_config.url_mount_path, dest='url_mount_path')
+    parser.add_argument(
+        '--ssl_cert_file_path', help='ssl certificate file path', default=default_config.ssl_cert_file_path, dest='ssl_cert_file_path')
+    parser.add_argument(
+        '--ssl_cert_key_file_path', help='ssl certificate key file path', default=default_config.ssl_cert_key_file_path, dest='ssl_cert_key_file_path')
+    parser.add_argument(
+        '--orgs_config_file_path', help=' orgs config file path', default=None, dest='orgs_config_file_path'
+    )
+
     parser.add_argument('services', nargs='*')
 
     args = parser.parse_args()
@@ -139,7 +164,10 @@ def main(argv):
     orgs_config_template = os.path.normpath(os.path.join(vedavaapi_api_dir, 'orgs_template.json'))
 
     if not os.path.exists(orgs_config_dest) or args.overwrite:
-        copyfile(orgs_config_template, orgs_config_dest)
+        orgs_config_file_path = args.orgs_config_file_path or orgs_config_template
+        if not os.path.exists(os.path.dirname(orgs_config_dest)):
+            os.makedirs(os.path.dirname(orgs_config_dest))
+        copyfile(orgs_config_file_path, orgs_config_dest)
         print('copied orgs config file')
         db_conf_update_requested = bool(args.db_type or args.db_host)
         orgs_config = json.loads(open(orgs_config_dest, 'rb').read().decode('utf-8'))
@@ -154,7 +182,7 @@ def main(argv):
             open(orgs_config_dest, 'wb').write(json.dumps(orgs_config, ensure_ascii=False, indent=2).encode('utf-8'))
             print('db config updated')
 
-    # 2.1 copy services config file
+    # 2.1 copy services config files
     services_config_dir = os.path.normpath(os.path.join(
         unicode_for(args.install_path),
         file_store_conventions.conf_base_dir,
@@ -191,24 +219,52 @@ def main(argv):
         unicode_for(args.install_path), unicode_for(file_store_conventions.creds_base_dir))
     print(global_creds_dir_path)
     if not os.path.exists(global_creds_dir_path):
-        if args.creds_to_copy:
+        if args.creds_dir:
             try:
-                copytree(unicode_for(args.creds_to_copy), global_creds_dir_path)
+                copytree(unicode_for(args.creds_dir), global_creds_dir_path)
                 print('creds copied')
             except:
                 raise
 
-    # 5. create and save wsgi configuration, TODO should be modified for https
-    with open(os.path.join(vedavaapi_api_dir, default_config.apache_wsgi_config_template), 'rb') as template:
-        templateconf = template.read().decode(encoding='utf-8')
-        conf = templateconf.replace('$USER', user).replace('$GROUP', user).replace('$SRCDIR', vedavaapi_api_dir).replace('$MOD', 'vedavaapi')
+    # 5. create and save wsgi configuration
+    apache_conf_template_file_path = os.path.join(vedavaapi_api_dir, default_config.apache_conf_template_file_path)
+    apache_https_conf_template_file_path = os.path.join(vedavaapi_api_dir, default_config.apache_https_conf_template_file_path)
 
-        conf_file = os.path.join(args.install_path, file_store_conventions.conf_base_dir, args.wsgi_conf)
+    wsgi_conf_dir = os.path.join(
+        args.install_path, file_store_conventions.conf_base_dir, file_store_conventions.wsgi_conf_base_dir)
+
+    try:
+        os.makedirs(wsgi_conf_dir, exist_ok=True)
+    except Exception as e:
+        raise e
+
+    apache_conf_file_path = os.path.join(
+        wsgi_conf_dir, file_store_conventions.apache_conf_file_path)
+    apache_https_conf_file_path = os.path.join(
+        wsgi_conf_dir, file_store_conventions.apache_https_conf_file_path)
+
+    with open(apache_conf_template_file_path, 'rb') as apache_conf_template_file:
+
+        apache_conf_template = apache_conf_template_file.read().decode(encoding='utf-8')
+        apache_conf = apache_conf_template.replace('$USER', user).replace('$GROUP', user).replace('$SRC_DIR', vedavaapi_api_dir).replace('$SERVER_NAME', args.server_name).replace('$MOUNT_PATH', args.url_mount_path).replace('$THREADS', args.wsgi_process_threads)
+
         try:
-            with open(conf_file, 'wb') as newf:
-                newf.write(conf.encode('utf-8'))
+            with open(apache_conf_file_path, 'wb') as apache_conf_file:
+                apache_conf_file.write(apache_conf.encode('utf-8'))
         except Exception as e:
-            print("Could not write " + conf_file + ": ", e)
+            print("Could not write " + apache_conf_file_path + ": ", e)
+            sys.exit(1)
+
+    with open(apache_https_conf_template_file_path, 'rb') as apache_https_conf_template_file:
+
+        apache_https_conf_template = apache_https_conf_template_file.read().decode('utf-8')
+        apache_https_conf = apache_https_conf_template.replace('$USER', user).replace('$GROUP', user).replace('$SRC_DIR', vedavaapi_api_dir).replace('$SERVER_NAME', args.server_name).replace('$MOUNT_PATH', args.url_mount_path).replace('$THREADS', args.wsgi_process_threads).replace('$SSL_CERT_FILE_PATH', args.ssl_cert_file_path).replace('$SSL_CERT_KEY_FILE_PATH', args.ssl_cert_key_file_path)
+
+        try:
+            with open(apache_https_conf_file_path, 'wb') as apache_https_conf_file:
+                apache_https_conf_file.write(apache_conf.encode('utf-8'))
+        except Exception as e:
+            print("Could not write " + apache_https_conf_file_path + ": ", e)
             sys.exit(1)
 
     # 6. generate runconfig.json, and save it
@@ -220,13 +276,10 @@ def main(argv):
         'host': args.host,
         'port': int(args.port),
     }
-    with open(os.path.join(vedavaapi_api_dir, default_config.runconfig_file), 'wb') as rc:
+    with open(os.path.join(vedavaapi_api_dir, runconfig_file_path), 'wb') as rc:
         rc.write(json.dumps(runconf, ensure_ascii=False, indent=4).encode('utf-8'))
         print('runconfig updated')
 
 
 if __name__ == '__main__':
     main(sys.argv[:])
-
-
-# TODO generate final apache conf with all concerns addressed

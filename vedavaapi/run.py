@@ -94,7 +94,8 @@ def setup_app():
         del new_run_config['reset']
         open(runconfig_file, 'wb').write(json.dumps(new_run_config, ensure_ascii=False, indent=4).encode('utf-8'))
 
-    orgs_config = json.loads(open(os.path.join(runconfig['install_path'], 'conf/orgs.json'), 'rb').read().decode('utf-8'))
+    orgs_config = json.loads(open(os.path.join(
+        runconfig['install_path'], 'conf/orgs.json'), 'rb').read().decode('utf-8'))
     orgs_manager = OrganizationsManager(app, orgs_config)
     orgs_manager.register_blueprint()
     orgs_manager.setup_middle_ware()
