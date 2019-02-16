@@ -1,6 +1,6 @@
 import flask_restplus
 from flask import Blueprint
-from . import OrganizationsManager
+from vedavaapi.orgs import OrganizationsManager
 
 
 orgs_blueprint = Blueprint('organizations', __name__)

@@ -1,7 +1,7 @@
 {
   "vedavaapi": {
-    "label": "vedavaapi",
-    "description": "vedavaapi organisation",
+    "label": "Vedavaapi Foundation",
+    "description": "Portal for making indic knowledge accessible, for humans and machines",
     "root_admin": {
       "email": "admin.1@vedavaapi.org",
       "hashedPassword": "$2b$12$VBEGrh80kp9SCQ4kTZOF9uU5zXh.lnADujlgjmGDxrHPNElxxBQh2"
