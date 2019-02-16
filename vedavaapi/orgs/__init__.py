@@ -1,3 +1,5 @@
+
+
 class OrganizationsManager(object):
 
     instance = None
@@ -8,8 +10,8 @@ class OrganizationsManager(object):
         self.orgs_config = orgs_config
 
     def register_blueprint(self):
-        from .orgs_api import orgs_blueprint
-        self.app.register_blueprint(orgs_blueprint, url_prefix='/global/orgs')
+        from .api import orgs_blueprint
+        self.app.register_blueprint(orgs_blueprint, url_prefix='/orgs')
 
     def setup_middle_ware(self):
         self.app.wsgi_app = OrganizationPrefixMiddleware(self.app.wsgi_app, list(self.orgs_config.keys()))

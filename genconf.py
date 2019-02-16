@@ -39,18 +39,11 @@ default_config = DotDict({
     'reset': False,
     'debug': False,
 
-    'apache_conf_ln_path': '/etc/apache2/sites-enabled/vedavaapi_api.conf',
-    'apache_https_conf_ln_path': '/etc/apache2/sites-enabled/vedavaapi_api-le-ssl.conf',
-
     'apache_conf_template_file_path': 'wsgi/apache_conf_template.conf',
-    'apache_https_conf_template_file_path': 'wsgi/apache_https_conf_template.conf',
 
-    'server_name': 'api.vedavaapi.org',
+    'wsgi_process_name': 'vedavaapi_api',
     'wsgi_process_threads': 5,
-    'url_mount_path': 'py',
-
-    'ssl_cert_file_path': '/etc/letsencrypt/live/*.vedavaapi.org/fullchain.pem',
-    'ssl_cert_key_file_path': '/etc/letsencrypt/live/*.vedavaapi.org/privkey.pem'
+    'url_mount_path': 'py'
 })
 
 runconfig_file_path = 'vedavaapi/runconfig.json'
@@ -88,7 +81,7 @@ vedavaapi_dir = os.path.normpath(os.path.join(vedavaapi_api_dir, os.path.pardir)
 
 all_package_dirs = [
     'vedavaapi_core', 'vedavaapi_api', 'docimage', 'core_services', 'ullekhanam',
-    'iiif', 'loris', 'sling', 'smaps', 'objectdb',
+    'iiif', 'image_analytics', 'loris', 'sling', 'smaps', 'objectdb',
     "sanskrit_ld", "google_services_helper"
 ]  # to be added to PYTHONPATH for this invocation. relative to root vedavaapi dir
 
@@ -100,7 +93,8 @@ for package_dir in all_package_dirs:
 def main(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '-i', '--install_path', help='install directory path, where we install entire app file structure. defaults to /opt/vedavaapi/',
+        '-i', '--install_path',
+        help='install directory path, where we install entire app file structure. defaults to /opt/vedavaapi/',
         default=default_config.install_path, dest='install_path')
 
     parser.add_argument(
@@ -126,18 +120,21 @@ def main(argv):
         default=default_config.port, dest='port')
 
     parser.add_argument(
-        '--server_name', help='server_name for apache conf', default=default_config.server_name, dest='server_name')
+        '--wsgi_process_name', help='wsgi process name',
+        default=default_config.wsgi_process_name, dest='wsgi_process_name')
     parser.add_argument(
-        '--wsgi_process_threads', help='no of threads wsgi handler spans (to be set, in apache conf)', default=str(default_config.wsgi_process_threads), dest='wsgi_process_threads')
+        '--wsgi_process_threads', help='no of threads wsgi handler spans (to be set, in apache conf)',
+        default=str(default_config.wsgi_process_threads), dest='wsgi_process_threads')
     parser.add_argument(
-        '--url_mount_path', help='app url mount path. defaults to ' + default_config.url_mount_path, default=default_config.url_mount_path, dest='url_mount_path')
-    parser.add_argument(
-        '--ssl_cert_file_path', help='ssl certificate file path', default=default_config.ssl_cert_file_path, dest='ssl_cert_file_path')
-    parser.add_argument(
-        '--ssl_cert_key_file_path', help='ssl certificate key file path', default=default_config.ssl_cert_key_file_path, dest='ssl_cert_key_file_path')
+        '--url_mount_path', help='app url mount path. defaults to ' + default_config.url_mount_path,
+        default=default_config.url_mount_path, dest='url_mount_path')
     parser.add_argument(
         '--orgs_config_file_path', help=' orgs config file path', default=None, dest='orgs_config_file_path'
     )
+    parser.add_argument(
+        '--services_config_source_dir_path',
+        help='path to directory where custom configurations available, if they. else uses templates',
+        default=None, dest='services_config_source_dir_path')
 
     parser.add_argument('services', nargs='*')
 
@@ -161,26 +158,29 @@ def main(argv):
     orgs_config_dest = os.path.normpath(
         os.path.join(unicode_for(args.install_path), file_store_conventions.conf_base_dir, 'orgs.json'))
 
-    orgs_config_template = os.path.normpath(os.path.join(vedavaapi_api_dir, 'orgs_template.json'))
-
     if not os.path.exists(orgs_config_dest) or args.overwrite:
-        orgs_config_file_path = args.orgs_config_file_path or orgs_config_template
+        orgs_config_template = os.path.normpath(
+            os.path.join(vedavaapi_api_dir, 'vedavaapi/orgs', 'orgs_config_template.json'))
+        orgs_config_source_path = args.orgs_config_file_path or orgs_config_template
         if not os.path.exists(os.path.dirname(orgs_config_dest)):
             os.makedirs(os.path.dirname(orgs_config_dest))
-        copyfile(orgs_config_file_path, orgs_config_dest)
+        copyfile(orgs_config_source_path, orgs_config_dest)
         print('copied orgs config file')
-        db_conf_update_requested = bool(args.db_type or args.db_host)
-        orgs_config = json.loads(open(orgs_config_dest, 'rb').read().decode('utf-8'))
-        is_db_conf_defined = True in ['db_type' in orgs_config[org] for org in
-                                      orgs_config.keys()]
-        should_update_db_conf = db_conf_update_requested or not is_db_conf_defined
-        if should_update_db_conf:
-            for org_name in orgs_config:
-                org_config = orgs_config[org_name]
-                org_config['db_type'] = args.db_type or default_config.db_type
-                org_config['db_host'] = args.db_host or default_config.db_host
-            open(orgs_config_dest, 'wb').write(json.dumps(orgs_config, ensure_ascii=False, indent=2).encode('utf-8'))
-            print('db config updated')
+
+        if not args.orgs_config_file_path:
+            db_conf_update_requested = bool(args.db_type or args.db_host)
+            orgs_config = json.loads(open(orgs_config_dest, 'rb').read().decode('utf-8'))
+            is_registry_db_conf_defined = True in [
+                'db_type' in orgs_config[org] for org in orgs_config.keys()]
+            should_update__registry_db_conf = db_conf_update_requested or not is_registry_db_conf_defined
+            if should_update__registry_db_conf:
+                for org_name in orgs_config:
+                    org_config = orgs_config[org_name]
+                    org_config['db_type'] = args.db_type or default_config.db_type
+                    org_config['db_host'] = args.db_host or default_config.db_host
+                open(orgs_config_dest, 'wb').write(
+                    json.dumps(orgs_config, ensure_ascii=False, indent=2).encode('utf-8'))
+                print('orgs db config updated')
 
     # 2.1 copy services config files
     services_config_dir = os.path.normpath(os.path.join(
@@ -192,7 +192,7 @@ def main(argv):
         os.makedirs(services_config_dir)  # create services dir leaf with all parent dirs if not exists.
     services_copied = []
 
-    def copy_service_config(service_name):
+    def copy_service_config(service_name, service_config_source_dir_path=None):
         from vedavaapi.common import VedavaapiServices
         svc_cls = VedavaapiServices.service_class_name(service_name)
         _tmp = __import__('vedavaapi.{}'.format(service_name), globals(), locals(), [svc_cls])
@@ -201,7 +201,13 @@ def main(argv):
             if dep in services_copied:
                 continue
             copy_service_config(dep)
+
         src = os.path.join(os.path.dirname(_tmp.__file__), 'config_template.json')
+        if args.services_config_source_dir_path:
+            custom_path = os.path.join(args.services_config_source_dir_path, '{}.json'.format(service_name))
+            if os.path.exists(custom_path):
+                src = custom_path
+
         dest = os.path.join(services_config_dir, '{}.json'.format(service_name))
         already_exists = os.path.exists(dest)
         should_copy = (not already_exists) or args.overwrite
@@ -228,7 +234,6 @@ def main(argv):
 
     # 5. create and save wsgi configuration
     apache_conf_template_file_path = os.path.join(vedavaapi_api_dir, default_config.apache_conf_template_file_path)
-    apache_https_conf_template_file_path = os.path.join(vedavaapi_api_dir, default_config.apache_https_conf_template_file_path)
 
     wsgi_conf_dir = os.path.join(
         args.install_path, file_store_conventions.conf_base_dir, file_store_conventions.wsgi_conf_base_dir)
@@ -240,31 +245,20 @@ def main(argv):
 
     apache_conf_file_path = os.path.join(
         wsgi_conf_dir, file_store_conventions.apache_conf_file_path)
-    apache_https_conf_file_path = os.path.join(
-        wsgi_conf_dir, file_store_conventions.apache_https_conf_file_path)
 
     with open(apache_conf_template_file_path, 'rb') as apache_conf_template_file:
 
         apache_conf_template = apache_conf_template_file.read().decode(encoding='utf-8')
-        apache_conf = apache_conf_template.replace('$USER', user).replace('$GROUP', user).replace('$SRC_DIR', vedavaapi_api_dir).replace('$SERVER_NAME', args.server_name).replace('$MOUNT_PATH', args.url_mount_path).replace('$THREADS', args.wsgi_process_threads)
+        apache_conf = (
+            apache_conf_template.replace('$USER', user).replace('$GROUP', user).replace('$SRC_DIR', vedavaapi_api_dir)
+            .replace('$MOUNT_PATH', args.url_mount_path)
+            .replace('$THREADS', args.wsgi_process_threads).replace('$PROCESS_NAME', args.wsgi_process_name))
 
         try:
             with open(apache_conf_file_path, 'wb') as apache_conf_file:
                 apache_conf_file.write(apache_conf.encode('utf-8'))
         except Exception as e:
             print("Could not write " + apache_conf_file_path + ": ", e)
-            sys.exit(1)
-
-    with open(apache_https_conf_template_file_path, 'rb') as apache_https_conf_template_file:
-
-        apache_https_conf_template = apache_https_conf_template_file.read().decode('utf-8')
-        apache_https_conf = apache_https_conf_template.replace('$USER', user).replace('$GROUP', user).replace('$SRC_DIR', vedavaapi_api_dir).replace('$SERVER_NAME', args.server_name).replace('$MOUNT_PATH', args.url_mount_path).replace('$THREADS', args.wsgi_process_threads).replace('$SSL_CERT_FILE_PATH', args.ssl_cert_file_path).replace('$SSL_CERT_KEY_FILE_PATH', args.ssl_cert_key_file_path)
-
-        try:
-            with open(apache_https_conf_file_path, 'wb') as apache_https_conf_file:
-                apache_https_conf_file.write(apache_conf.encode('utf-8'))
-        except Exception as e:
-            print("Could not write " + apache_https_conf_file_path + ": ", e)
             sys.exit(1)
 
     # 6. generate runconfig.json, and save it
