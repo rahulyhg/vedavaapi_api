@@ -136,14 +136,17 @@ def main(argv):
         help='path to directory where custom configurations available, if they. else uses templates',
         default=None, dest='services_config_source_dir_path')
 
-    parser.add_argument('services', nargs='*')
+    parser.add_argument(
+        '--services', help='space seperated list of service names', required=True, dest='services')
 
     args = parser.parse_args()
 
-    if len(args.services) < 1:
+    if not args.services:
         logging.error("there should be atleast one service to be started.")
         parser.print_help(sys.stderr)
         exit(1)
+
+    requested_services = args.services.split(' ')
 
     # 1. check install_path
     if not os.path.exists(args.install_path):
@@ -216,7 +219,7 @@ def main(argv):
             print('copied {} config file'.format(service_name))
         services_copied.append(service_name)
 
-    for service in args.services:
+    for service in requested_services:
         copy_service_config(service)
     print('services config files copied.')
 
@@ -266,7 +269,7 @@ def main(argv):
         'install_path': unicode_for(args.install_path),
         'debug': args.debug,
         'reset': args.reset,
-        'services': args.services,
+        'services': requested_services,
         'host': args.host,
         'port': int(args.port),
     }
