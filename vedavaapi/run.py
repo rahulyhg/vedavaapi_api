@@ -22,7 +22,7 @@ vedavaapi_dir = unicode_for(os.path.normpath(os.path.join(vedavaapi_api_dir, os.
 all_package_dirs = [
     'vedavaapi_core', 'vedavaapi_api', 'docimage', 'core_services', 'ullekhanam', 'iiif', 'image_analytics', 'loris',
     'sling', 'smaps', 'objectdb', 'sanskrit_data', 'sanskrit_ld',
-    'google_services_helper']  # to be added to PYTHONPATH for this invocation. relative to root vedavaapi dir
+    'google_services_helper', 'vv_objstore', 'vv_schemas']  # to be added to PYTHONPATH for this invocation. relative to root vedavaapi dir
 for package_dir in all_package_dirs:
     sys.path.append(unicode_for(os.path.join(vedavaapi_dir, package_dir)))
 
