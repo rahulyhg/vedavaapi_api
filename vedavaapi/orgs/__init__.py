@@ -15,7 +15,7 @@ class OrganizationsManager(object):
 
     def setup_middle_ware(self):
         self.app.wsgi_app = OrganizationPrefixMiddleware(self.app.wsgi_app, list(self.orgs_config.keys()))
-        self.app.config['ORGS'] = self.orgs_config.keys()
+        self.app.config['ORGS'] = list(self.orgs_config.keys())
 
 
 class OrganizationPrefixMiddleware(object):

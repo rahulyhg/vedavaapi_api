@@ -43,7 +43,7 @@ default_config = DotDict({
 
     'wsgi_process_name': 'vedavaapi_api',
     'wsgi_process_threads': 5,
-    'url_mount_path': 'py'
+    'url_mount_path': ''
 })
 
 runconfig_file_path = 'vedavaapi/runconfig.json'

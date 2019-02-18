@@ -12,12 +12,9 @@ def _get_mount_path():
 
 def _get_org():
     org_name = request.environ['SCRIPT_NAME'].split('/')[-1]
-    if not org_name:
-        return None
-    '''
-    if org_name not in flask.current_app.config.get('ORGS', {}):
-        return None
-    '''
+    if len(get_orgs_config().keys()) == 1 and org_name == '':
+        return ''
+
     if org_name not in get_orgs_config():
         return None
     return org_name
