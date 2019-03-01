@@ -24,6 +24,9 @@ class OrganizationPrefixMiddleware(object):
         self.org_names = org_names
 
     def __call__(self, environ, start_response):
+        environ['ORIGINAL_PATH_INFO'] = environ['PATH_INFO']
+        environ['ORIGINAL_SCRIPT_NAME'] = environ.get('SCRIPT_NAME', '')
+
         segments = str(environ['PATH_INFO']).split('/', maxsplit=2)
         if len(segments) < 3 or segments[1] not in self.org_names:
             return self.app(environ, start_response)
